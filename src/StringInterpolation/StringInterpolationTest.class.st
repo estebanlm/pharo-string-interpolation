@@ -7,14 +7,16 @@ Class {
 { #category : #compiler }
 StringInterpolationTest class >> compiler [
 
-	^super compiler addPlugin: StringInterpolationPlugin
+	^ super compiler 
+		addPlugin: StringInterpolationPlugin;
+		yourself
 ]
 
 { #category : #compiler }
 StringInterpolationTest class >> highlighter [
 
-	^super highlighter
-		addPlugin: StringInterpolationASTHighlighterPlugin
+	"^super highlighter
+		addPlugin: StringInterpolationASTHighlighterPlugin"
 ]
 
 { #category : #tests }
@@ -52,6 +54,13 @@ StringInterpolationTest >> testInterpolateFailingExpressionThrowsSyntaxError [
 	self
 		should: [ self class compiler evaluate: ('''1+1 is \{1*}''' reject: [ :c | c = $\ ]) ]
 		raise: SyntaxErrorNotification
+]
+
+{ #category : #tests }
+StringInterpolationTest >> testInterpolateRegex [
+	"Tests the escaping of \{ \} does not interferes with regex stuff."
+	
+	self assert: ('\{.*\}' asRegex matches: ('' join: #(${ $t $e $s $t $})))
 ]
 
 { #category : #tests }
