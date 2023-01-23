@@ -38,7 +38,7 @@ StringInterpolationASTHighlighterPlugin >> expandStringLiteral: aRBLiteralValueN
 	(StringInterpolationPlugin new hasInterpolationPattern: aRBLiteralValueNode value)
 		ifFalse: [ ^ self ].
 	
-	interpolatedStringNode := 	RBInterpolatedStringNode
+	interpolatedStringNode := RBInterpolatedStringNode
 		on: aRBLiteralValueNode
 		patterns: (self extractStatementsFrom: aRBLiteralValueNode).
 	
@@ -57,10 +57,10 @@ StringInterpolationASTHighlighterPlugin >> extractStatementsFrom: aRBLiteralValu
 	stringToInterpolate := aRBLiteralValueNode value.
 	stream := stringToInterpolate readStream.
 	[ stream atEnd ] whileFalse: [ | currentChar | 
-		(currentChar := stream next) == ${
+		(currentChar := stream next) == $[
 			ifTrue: [ | expression expressionPosition |
 				expressionPosition := stream position. 
-				expression := stream upTo: $}.
+				expression := stream upTo: $].
 				messages add: (self
 					updateIndexesOfNode: ([ (RBParser parseExpression: expression)]
 						on: SyntaxErrorNotification

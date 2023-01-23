@@ -12,9 +12,9 @@ StringInterpolationPlugin class >> interpolate: aString withAssociations: aColle
 	^ aString class new: aString size streamContents: [ :result | | stream |
 		stream := aString readStream.
 		[ stream atEnd ] whileFalse: [ | currentChar | 
-			(currentChar := stream next) == ${
+			(currentChar := stream next) == $[
 				ifTrue: [ | expression | 
-					expression := stream upTo: $}.
+					expression := stream upTo: $].
 					result nextPutAll: (dictionaryValues at: expression) asString ]
 				ifFalse: [
 					currentChar == $\
@@ -29,8 +29,8 @@ StringInterpolationPlugin class >> priority [
 
 { #category : #transforming }
 StringInterpolationPlugin >> expandStringLiteral: aRBLiteralValueNode [ 
-	
 	| newMessageNode |
+	
 	(self hasInterpolationPattern: aRBLiteralValueNode value)
 		ifFalse: [ ^ self ].
 
@@ -41,8 +41,7 @@ StringInterpolationPlugin >> expandStringLiteral: aRBLiteralValueNode [
 			RBLiteralValueNode value: aRBLiteralValueNode value.
 			RBArrayNode statements: (self extractStatementsFrom: aRBLiteralValueNode)}.
 	
-	aRBLiteralValueNode replaceWith: newMessageNode.
-	
+	aRBLiteralValueNode replaceWith: newMessageNode
 ]
 
 { #category : #extracting }
@@ -58,10 +57,10 @@ StringInterpolationPlugin >> extractStatementsFrom: aLiteralValueNode [
 	stringToInterpolate := aLiteralValueNode value.
 	stream := stringToInterpolate readStream.
 	[ stream atEnd ] whileFalse: [ | currentChar | 
-		(currentChar := stream next) == ${
+		(currentChar := stream next) == $[
 			ifTrue: [ | expression expressionPosition |
 				expressionPosition := stream position. 
-				expression := stream upTo: $}.
+				expression := stream upTo: $].
 				messages add: (RBMessageNode
 					receiver: (RBLiteralNode value: expression)
 					selector: #->
@@ -81,9 +80,21 @@ StringInterpolationPlugin >> extractStatementsFrom: aLiteralValueNode [
 
 { #category : #testing }
 StringInterpolationPlugin >> hasInterpolationPattern: aString [ 
+	| stream char escape open |
 	
-	"Any string with a {} pair is a potential interpolation target"
-	^ aString matchesRegex: '.*{.*}.*'
+	"Any string with a [] pair is a potential interpolation target"
+	"^ aString matchesRegex: '.*\[.*\].*'"
+	stream := aString readStream.
+	open := false.
+	escape := false.
+	[ stream atEnd ] whileFalse: [ 
+		char := stream next.
+		(char = $\) ifTrue: [ escape := escape not ].
+		((char = $[) and: [ escape not ]) ifTrue: [ open := true ].
+		((char = $]) and: [ escape not and: [ open ] ]) 
+			ifTrue: [ ^ true ] ].
+	
+	^ false
 ]
 
 { #category : #api }
@@ -92,5 +103,8 @@ StringInterpolationPlugin >> transform [
 	ast nodesDo: [ :each |
 		(each isLiteralNode and: [ each value isString ])
 			ifTrue: [ self expandStringLiteral: each ]  ].
-	^ ast doSemanticAnalysis; yourself
+		
+	^ ast 
+		doSemanticAnalysis; 
+		yourself
 ]

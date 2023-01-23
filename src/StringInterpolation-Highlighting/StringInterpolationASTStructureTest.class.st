@@ -18,7 +18,7 @@ StringInterpolationASTStructureTest >> interpolationNode [
 StringInterpolationASTStructureTest >> setUp [
 
 	super setUp.
-	sourceCode := 'methodHeader ''{1*1}'''.
+	sourceCode := 'methodHeader ''[1*1]'''.
 	ast := RBParser parseMethod: sourceCode.
 	ast := (StringInterpolationASTHighlighterPlugin ast: ast) transform.
 ]
@@ -34,7 +34,7 @@ StringInterpolationASTStructureTest >> testInterpolatedMessageStartCorrespondsTo
 
 	| message |
 	message := self interpolationNode patterns anyOne.
-	self assert: message start equals: (sourceCode indexOf: ${) + 1
+	self assert: message start equals: (sourceCode indexOf: $[) + 1
 ]
 
 { #category : #tests }
