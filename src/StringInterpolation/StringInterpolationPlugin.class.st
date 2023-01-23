@@ -4,6 +4,25 @@ Class {
 	#category : #StringInterpolation
 }
 
+{ #category : #testing }
+StringInterpolationPlugin class >> hasInterpolationPattern: aString [ 
+	| stream char escape open |
+	
+	"Any string with a [] pair is a potential interpolation target"
+	"^ aString matchesRegex: '.*\[.*\].*'"
+	stream := aString readStream.
+	open := false.
+	escape := false.
+	[ stream atEnd ] whileFalse: [ 
+		char := stream next.
+		(char = $\) ifTrue: [ escape := escape not ].
+		((char = $[) and: [ escape not ]) ifTrue: [ open := true ].
+		((char = $]) and: [ escape not and: [ open ] ]) 
+			ifTrue: [ ^ true ] ].
+	
+	^ false
+]
+
 { #category : #api }
 StringInterpolationPlugin class >> interpolate: aString withAssociations: aCollection [
 
@@ -79,22 +98,9 @@ StringInterpolationPlugin >> extractStatementsFrom: aLiteralValueNode [
 ]
 
 { #category : #testing }
-StringInterpolationPlugin >> hasInterpolationPattern: aString [ 
-	| stream char escape open |
-	
-	"Any string with a [] pair is a potential interpolation target"
-	"^ aString matchesRegex: '.*\[.*\].*'"
-	stream := aString readStream.
-	open := false.
-	escape := false.
-	[ stream atEnd ] whileFalse: [ 
-		char := stream next.
-		(char = $\) ifTrue: [ escape := escape not ].
-		((char = $[) and: [ escape not ]) ifTrue: [ open := true ].
-		((char = $]) and: [ escape not and: [ open ] ]) 
-			ifTrue: [ ^ true ] ].
-	
-	^ false
+StringInterpolationPlugin >> hasInterpolationPattern: aString [
+
+	^ self class hasInterpolationPattern: aString
 ]
 
 { #category : #api }

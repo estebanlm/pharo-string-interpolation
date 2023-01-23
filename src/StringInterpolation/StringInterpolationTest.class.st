@@ -13,11 +13,11 @@ StringInterpolationTest class >> compiler [
 ]
 
 { #category : #compiler }
-StringInterpolationTest class >> highlighter [
+StringInterpolationTest class >> syntaxHighlighter [
 
-	^ super highlighter
-		"addPlugin: StringInterpolationASTHighlighterPlugin;
-		yourself"
+	^ super syntaxHighlighter
+		addPlugin: StringInterpolationASTHighlighterPlugin;
+		yourself
 ]
 
 { #category : #tests }
