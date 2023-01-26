@@ -1,6 +1,9 @@
 Class {
 	#name : #StringInterpolationPlugin,
 	#superclass : #OCCompilerASTPlugin,
+	#instVars : [
+		'ast'
+	],
 	#category : #StringInterpolation
 }
 
@@ -25,14 +28,14 @@ StringInterpolationPlugin class >> hasInterpolationPattern: aString [
 
 { #category : #api }
 StringInterpolationPlugin class >> interpolate: aString withAssociations: aCollection [
-
 	| dictionaryValues |
+
 	dictionaryValues := aCollection asDictionary.
 	^ aString class new: aString size streamContents: [ :result | | stream |
 		stream := aString readStream.
-		[ stream atEnd ] whileFalse: [ | currentChar | 
+		[ stream atEnd ] whileFalse: [ | currentChar |
 			(currentChar := stream next) == $[
-				ifTrue: [ | expression | 
+				ifTrue: [ | expression |
 					expression := stream upTo: $].
 					result nextPutAll: (dictionaryValues at: expression) asString ]
 				ifFalse: [
@@ -41,9 +44,16 @@ StringInterpolationPlugin class >> interpolate: aString withAssociations: aColle
 						ifFalse: [ result nextPut: currentChar ] ] ] ]
 ]
 
-{ #category : #private }
+{ #category : #accessing }
 StringInterpolationPlugin class >> priority [
-	^ 0
+
+	^ 100
+]
+
+{ #category : #'instance creation' }
+StringInterpolationPlugin class >> transform: ast [
+
+	^ self new transform: ast
 ]
 
 { #category : #transforming }
@@ -64,28 +74,27 @@ StringInterpolationPlugin >> expandStringLiteral: aRBLiteralValueNode [
 ]
 
 { #category : #extracting }
-StringInterpolationPlugin >> extractStatementsFrom: aLiteralValueNode [ 
-
+StringInterpolationPlugin >> extractStatementsFrom: aLiteralValueNode [
 	"Parses a string inside a literalValueNode and returns a collection of Message sends.
 	The receiver of each message send is a string, with the same value as the interpolation pattern.
 	The selector is #-> to create an association.
 	The argument is an expression to evaluate to a value in the method."
 	| messages stream stringToInterpolate |
 	messages := OrderedCollection new.
-	
+
 	stringToInterpolate := aLiteralValueNode value.
 	stream := stringToInterpolate readStream.
-	[ stream atEnd ] whileFalse: [ | currentChar | 
+	[ stream atEnd ] whileFalse: [ | currentChar |
 		(currentChar := stream next) == $[
 			ifTrue: [ | expression expressionPosition |
-				expressionPosition := stream position. 
+				expressionPosition := stream position.
 				expression := stream upTo: $].
 				messages add: (RBMessageNode
 					receiver: (RBLiteralNode value: expression)
 					selector: #->
 					arguments: { [RBParser parseExpression: expression]
 						on: SyntaxErrorNotification
-						do: [ SyntaxErrorNotification 	
+						do: [ SyntaxErrorNotification
 							inClass: Object
 							withCode: ast sourceCode
 							doitFlag: false
@@ -103,14 +112,28 @@ StringInterpolationPlugin >> hasInterpolationPattern: aString [
 	^ self class hasInterpolationPattern: aString
 ]
 
-{ #category : #api }
+{ #category : #accessing }
+StringInterpolationPlugin >> priority [
+
+	^ self class priority
+]
+
+{ #category : #transforming }
 StringInterpolationPlugin >> transform [
 
 	ast nodesDo: [ :each |
 		(each isLiteralNode and: [ each value isString ])
 			ifTrue: [ self expandStringLiteral: each ]  ].
-		
-	^ ast 
-		doSemanticAnalysis; 
+
+	^ ast
+		doSemanticAnalysis;
 		yourself
+]
+
+{ #category : #transforming }
+StringInterpolationPlugin >> transform: anRBMethodNode [
+
+	ast := anRBMethodNode.
+	self transform.
+	^ ast
 ]
